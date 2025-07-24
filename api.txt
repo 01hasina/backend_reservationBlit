@@ -1,0 +1,36 @@
+--------- ---------START LOGIN-----------------------------------------------
+http://127.0.0.1:8000/api/login
+exemple
+{
+  "email": "andry@example.com",
+  "mot_de_passe": "secret123"
+}
+response
+{
+    "user": {
+        "id": 12,
+        "nom": "Andry",
+        "prenom": "Rasoa",
+        "email": "andry@example.com",
+        "telephone": "0321234567",
+        "role_id": 1,
+        "date_inscription": "2025-07-24 13:42:37",
+        "remember_token": null,
+        "created_at": "2025-07-24T13:42:38.000000Z",
+        "updated_at": "2025-07-24T13:42:38.000000Z"
+    },
+    "token": "3|clPCcgP5aWDwLXQFKKEiCmuOW9TTeXkNeKYviKhib2e2bd25"
+}
+-----------END LOGIN-----------------------------------------
+-----------START INSCRIPTION--------------------------------------
+http://127.0.0.1:8000/api/register
+exemple
+{
+  "nom": "Andry",
+  "prenom": "Rasoa",
+  "email": "andry@example.com",
+  "mot_de_passe": "secret123",
+  "mot_de_passe_confirmation": "secret123",
+  "telephone": "0321234567",
+  "role_id": 1
+}

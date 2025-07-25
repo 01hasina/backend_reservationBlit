@@ -2,51 +2,43 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\AuthenticationException;
+
 
 class AuthController extends Controller
 {
-    // Login API
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'mot_de_passe' => 'required',
-        ]);
-
-        // Trouver l'utilisateur par email
         $user = User::where('email', $request->email)->first();
 
+       
         if (! $user) {
-            return response()->json(['message' => 'user introuvable'], 401);
-        }
-        if(! Hash::check($request->mot_de_passe, $user->mot_de_passe)){
-            return response()->json(['message' => 'mot de passe incorrect'], 401);
+            throw new AuthenticationException('Utilisateur introuvable.');
         }
 
-        // Créer un token Sanctum
+        if (! Hash::check($request->mot_de_passe, $user->mot_de_passe)) {
+            throw new AuthenticationException('Mot de passe incorrect.');
+        }
+
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
+            'user' => new UserResource($user->load('role')),
             'token' => $token,
         ]);
     }
 
-    // Register function
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $request->validate([
-            'nom' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'mot_de_passe' => 'required|string|min:6|confirmed',
-            'telephone' => 'nullable|string|max:20',
-            'role_id' => 'nullable|integer|exists:roles,id', // ou personnalise selon les rôles que tu autorises
-        ]);
+        $roleParDefaut = Role::firstOrCreate(['nom' => 'user']);
 
         $user = User::create([
             'nom' => $request->nom,
@@ -54,19 +46,18 @@ class AuthController extends Controller
             'email' => $request->email,
             'mot_de_passe' => $request->mot_de_passe,
             'telephone' => $request->telephone,
-            'role_id' => $request->role_id ?? 2, // 2 = par exemple 'user', 1 = admin
+            'role_id' => $roleParDefaut->id,
             'date_inscription' => now(),
-        ]);        
+        ]);
 
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
+            'user' => new UserResource($user->load('role')),
             'token' => $token,
         ]);
     }
 
-    // Logout API (révoque tous les tokens de l’utilisateur)
     public function logout(Request $request)
     {
         $request->user()->tokens()->delete();
